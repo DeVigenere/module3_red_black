@@ -232,6 +232,14 @@ class RedBlackTree {
         }
     }
 
+    void setReplacementChild(Node* z, std::unique_ptr<Node>&& child, Node*& x, Node*& xParent) {
+        x = child.get();
+        xParent = z->parent;
+        auto zPtr = extractNode(z);
+        transplant(z, std::move(child));
+        if (x) x->parent = xParent;
+    }
+
 public:
     RedBlackTree() : root(nullptr) {}
 
@@ -277,18 +285,10 @@ public:
         Node* xParent = nullptr;
 
         if (z->left == nullptr) {
-            x = z->right.get();
-            xParent = z->parent;
-            auto zPtr = extractNode(z);
-            transplant(z, std::move(zPtr->right));
-            if (x) x->parent = xParent;
+            setReplacementChild(z, std::move(z->right), x, xParent);
         }
         else if (z->right == nullptr) {
-            x = z->left.get();
-            xParent = z->parent;
-            auto zPtr = extractNode(z);
-            transplant(z, std::move(zPtr->left));
-            if (x) x->parent = xParent;
+            setReplacementChild(z, std::move(z->left), x, xParent);
         }
         else {
             y = minimum(z->right.get());
