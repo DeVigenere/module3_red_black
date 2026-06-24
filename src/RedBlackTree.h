@@ -240,6 +240,26 @@ class RedBlackTree {
         if (x) x->parent = xParent;
     }
 
+    void setReplacementChild(Node* z, Node* y, Node*& x, Node*& xParent) {
+        xParent = y->parent;
+        if (y->parent != z) {
+            x = y->right.get();
+            auto yPtr = extractNode(y);
+            transplant(y, std::move(yPtr->right));
+            y->right = std::move(z->right);
+            if (y->right) y->right->parent = y;
+        }
+        else {
+            x = y->right.get();
+            if (x) x->parent = y;
+        }
+        auto zPtr = extractNode(z);
+        transplant(z, std::move(zPtr));
+        y->left = std::move(z->left);
+        if (y->left) y->left->parent = y;
+        y->color = z->color;
+    }
+
 public:
     RedBlackTree() : root(nullptr) {}
 
@@ -293,27 +313,8 @@ public:
         else {
             y = minimum(z->right.get());
             yOriginalColor = y->color;
-            x = y->right.get();
-
-            if (y->parent == z) {
-                xParent = y;
-                if (x) x->parent = y;
-            }
-            else {
-                xParent = y->parent;
-                auto yPtr = extractNode(y);
-                transplant(y, std::move(yPtr->right));
-                y->right = std::move(z->right);
-                if (y->right) y->right->parent = y;
-            }
-
-            auto zPtr = extractNode(z);
-            transplant(z, std::move(zPtr));
-            y->left = std::move(z->left);
-            if (y->left) y->left->parent = y;
-            y->color = z->color;
+            setReplacementChild(z, y, x, xParent);
         }
-
         if (yOriginalColor == Color::BLACK) {
             deleteFixup(x ? x : root.get(), xParent ? xParent : root.get());
         }
